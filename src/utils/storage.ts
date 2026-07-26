@@ -43,17 +43,26 @@ export function useHistory() {
     setHistory((prev) => [newItem, ...prev].slice(0, 50)); // Keep last 50
   };
 
+  const removeHistoryItem = (id: string) => {
+    setHistory((prev) => prev.filter((item) => item.id !== id));
+  };
+
   const clearHistory = () => setHistory([]);
 
-  return { history, addHistory, clearHistory };
+  return { history, addHistory, removeHistoryItem, clearHistory };
 }
 
 export function useFavorites() {
   const [favorites, setFavorites] = useStorage<LocationItem[]>('maps2waze_favorites', []);
 
-  const addFavorite = (item: LocationItem) => {
-    if (!favorites.find(f => f.id === item.id)) {
-      setFavorites((prev) => [item, ...prev]);
+  const addFavorite = (item: LocationItem | Omit<LocationItem, 'id' | 'timestamp'>) => {
+    const fullItem: LocationItem = 'id' in item ? item : {
+      ...item,
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+    };
+    if (!favorites.some(f => f.id === fullItem.id || (f.lat === fullItem.lat && f.lng === fullItem.lng && f.title === fullItem.title))) {
+      setFavorites((prev) => [fullItem, ...prev]);
     }
   };
 
